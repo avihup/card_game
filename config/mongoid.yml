@@ -1,0 +1,60 @@
+development:
+  clients:
+    default:
+      database: card_games_development
+      hosts:
+        - localhost:27017
+      options:
+        # The default authentication mechanism for MongoDB
+        # auth_mech: :mongodb_cr
+        # auth_source: admin
+        # The default timeout for database operations in seconds
+        connect_timeout: 30
+        # The default timeout for socket operations in seconds
+        socket_timeout: 5
+        # The default read preference for the collection
+        read:
+          mode: :primary
+        # The default write concern for the collection
+        write:
+          w: 1
+        # The default max pool size for the connection pool
+        max_pool_size: 5
+        # The default minimum pool size for the connection pool
+        min_pool_size: 1
+        # The default timeout for getting a connection from the pool
+        wait_queue_timeout: 5
+        # The default timeout for connection attempts in seconds
+        server_selection_timeout: 5
+        # The default heartbeat frequency in seconds
+        heartbeat_frequency: 10
+        # The default local threshold for server selection in seconds
+        local_threshold: 0.015
+
+test:
+  clients:
+    default:
+      database: card_games_test
+      hosts:
+        - localhost:27017
+      options:
+        read:
+          mode: :primary
+        max_pool_size: 1
+
+production:
+  clients:
+    default:
+      database: card_games_production
+      hosts:
+        - localhost:27017
+      options:
+        # ssl: true
+        # ssl_verify: true
+        # ssl_cert: /path/to/my.cert
+        # ssl_key: /path/to/my.key
+        # ssl_ca_cert: /path/to/ca.cert
+        read:
+          mode: :primary
+        max_pool_size: 10
+        min_pool_size: 5 

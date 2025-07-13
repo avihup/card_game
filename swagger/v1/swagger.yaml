@@ -1,0 +1,538 @@
+openapi: '3.0.1'
+info:
+  title: Card Games API
+  version: v1
+  description: |
+    A Ruby on Rails API application that manages card game rules internally and enables multiplayer card games through RESTful endpoints.
+    
+    ## Features
+    - Game Rules Management
+    - Game Session Management
+    - Player Management
+    - Real-time Gameplay
+    
+    ## Authentication
+    For now, authentication is simplified using user_id and username parameters or headers.
+    
+    ## Base URL
+    - Development: http://localhost:3000/api/v1
+    - Production: https://your-domain.com/api/v1
+    
+paths:
+  /health:
+    get:
+      summary: API Health Check
+      description: Returns the health status of the API and its dependencies
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      version:
+                        type: string
+                      environment:
+                        type: string
+                      timestamp:
+                        type: string
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          type:
+                            type: string
+                      services:
+                        type: object
+                        properties:
+                          game_rules:
+                            type: integer
+                          game_sessions:
+                            type: integer
+                          waiting_games:
+                            type: integer
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /game_rules:
+    get:
+      summary: List Game Rules
+      description: Retrieve a paginated list of game rules
+      tags:
+        - Game Rules
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: search
+          in: query
+          description: Search by game rule name
+          required: false
+          schema:
+            type: string
+        - name: player_count
+          in: query
+          description: Filter by player count
+          required: false
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          description: User ID (for authentication)
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: Username (for authentication)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      game_rules:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GameRule'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      summary: Create Game Rule
+      description: Create a new game rule
+      tags:
+        - Game Rules
+      parameters:
+        - name: user_id
+          in: query
+          description: User ID (for authentication)
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: Username (for authentication)
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                game_rule:
+                  $ref: '#/components/schemas/GameRuleCreate'
+      responses:
+        '201':
+          description: Game rule created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/GameRule'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /game_sessions:
+    get:
+      summary: List Game Sessions
+      description: Retrieve a paginated list of game sessions
+      tags:
+        - Game Sessions
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: status
+          in: query
+          description: Filter by game session status
+          required: false
+          schema:
+            type: string
+            enum: [waiting, active, paused, finished, cancelled]
+        - name: joinable
+          in: query
+          description: Filter for joinable games
+          required: false
+          schema:
+            type: boolean
+        - name: game_rule_id
+          in: query
+          description: Filter by game rule ID
+          required: false
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: User ID (for authentication)
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: Username (for authentication)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      game_sessions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GameSession'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      summary: Create Game Session
+      description: Create a new game session
+      tags:
+        - Game Sessions
+      parameters:
+        - name: user_id
+          in: query
+          description: User ID (for authentication)
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: Username (for authentication)
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                game_session:
+                  type: object
+                  properties:
+                    game_rule_id:
+                      type: string
+                      description: ID of the game rule to use
+                  required:
+                    - game_rule_id
+      responses:
+        '201':
+          description: Game session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/GameSession'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    GameRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        deck_size:
+          type: integer
+        min_players:
+          type: integer
+        max_players:
+          type: integer
+        rules_data:
+          type: object
+        version:
+          type: string
+        created_by:
+          type: string
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    GameRuleCreate:
+      type: object
+      required:
+        - name
+        - description
+        - min_players
+        - max_players
+        - rules_data
+      properties:
+        name:
+          type: string
+          description: Name of the game
+        description:
+          type: string
+          description: Description of the game
+        deck_size:
+          type: integer
+          description: Size of the deck
+          default: 52
+        min_players:
+          type: integer
+          description: Minimum number of players
+        max_players:
+          type: integer
+          description: Maximum number of players
+        rules_data:
+          type: object
+          description: Game rules configuration
+          properties:
+            initial_hand_size:
+              type: integer
+            win_condition:
+              type: string
+              enum: [first_to_empty_hand, highest_score, lowest_score, last_player_standing]
+            turn_actions:
+              type: array
+              items:
+                type: string
+                enum: [play_card, draw_card, pass, discard, skip_turn]
+            special_rules:
+              type: object
+            scoring:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [elimination, points, sets, time_based]
+                points:
+                  type: object
+        version:
+          type: string
+          default: "1.0"
+        active:
+          type: boolean
+          default: true
+    
+    GameSession:
+      type: object
+      properties:
+        id:
+          type: string
+        game_rule:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            player_range:
+              type: string
+        status:
+          type: string
+          enum: [waiting, active, paused, finished, cancelled]
+        current_player_index:
+          type: integer
+        turn_count:
+          type: integer
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/GamePlayer'
+        player_count:
+          type: integer
+        can_join:
+          type: boolean
+        can_start:
+          type: boolean
+        is_full:
+          type: boolean
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        winner_id:
+          type: string
+        duration:
+          type: number
+        game_state:
+          type: object
+    
+    GamePlayer:
+      type: object
+      properties:
+        user_id:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer
+        hand_size:
+          type: integer
+        position:
+          type: integer
+        is_active:
+          type: boolean
+        is_current_player:
+          type: boolean
+        last_action_at:
+          type: string
+          format: date-time
+        hand:
+          oneOf:
+            - type: array
+              items:
+                type: object
+            - type: object
+              properties:
+                hand_size:
+                  type: integer
+    
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_count:
+          type: integer
+    
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errors:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+
+  securitySchemes:
+    UserAuth:
+      type: apiKey
+      in: query
+      name: user_id
+      description: Simple user authentication using user_id parameter
+
+security:
+  - UserAuth: []
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://your-domain.com/api/v1
+    description: Production server 
