@@ -1,0 +1,109 @@
+{
+    "game_rule": {
+      "name": "TAKI",
+      "description": "Israeli card game with sequences and special actions - fully configurable",
+      "deck_size": 112,
+      "min_players": 2,
+      "max_players": 10,
+      "version": "1.0",
+      "active": true,
+      "rules_data": {
+        "initial_hand_size": 8,
+        "win_condition": "first_to_empty_hand",
+        "turn_actions": ["play_card", "draw_card", "taki_sequence", "change_color", "break_plus_three"],
+        "deck_configuration": {
+          "description": "Taki deck with colored numbers and special action cards (112 cards total)",
+          "cards": [
+            { "suit": "red", "rank": "1", "value": 1, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "2", "value": 2, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "3", "value": 3, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "4", "value": 4, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "5", "value": 5, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "6", "value": 6, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "7", "value": 7, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "8", "value": 8, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "9", "value": 9, "color": "red", "type": "number", "count": 2 },
+            { "suit": "red", "rank": "stop", "value": 25, "color": "red", "type": "action", "count": 2 },
+            { "suit": "red", "rank": "plus", "value": 10, "color": "red", "type": "action", "count": 2 },
+            { "suit": "red", "rank": "change_direction", "value": 25, "color": "red", "type": "action", "count": 2 },
+            { "suit": "red", "rank": "taki", "value": 30, "color": "red", "type": "action", "count": 2 },
+            { "suit": "yellow", "rank": "1", "value": 1, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "2", "value": 2, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "3", "value": 3, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "4", "value": 4, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "5", "value": 5, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "6", "value": 6, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "7", "value": 7, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "8", "value": 8, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "9", "value": 9, "color": "yellow", "type": "number", "count": 2 },
+            { "suit": "yellow", "rank": "stop", "value": 25, "color": "yellow", "type": "action", "count": 2 },
+            { "suit": "yellow", "rank": "plus", "value": 10, "color": "yellow", "type": "action", "count": 2 },
+            { "suit": "yellow", "rank": "change_direction", "value": 25, "color": "yellow", "type": "action", "count": 2 },
+            { "suit": "yellow", "rank": "taki", "value": 30, "color": "yellow", "type": "action", "count": 2 },
+            { "suit": "green", "rank": "1", "value": 1, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "2", "value": 2, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "3", "value": 3, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "4", "value": 4, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "5", "value": 5, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "6", "value": 6, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "7", "value": 7, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "8", "value": 8, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "9", "value": 9, "color": "green", "type": "number", "count": 2 },
+            { "suit": "green", "rank": "stop", "value": 25, "color": "green", "type": "action", "count": 2 },
+            { "suit": "green", "rank": "plus", "value": 10, "color": "green", "type": "action", "count": 2 },
+            { "suit": "green", "rank": "change_direction", "value": 25, "color": "green", "type": "action", "count": 2 },
+            { "suit": "green", "rank": "taki", "value": 30, "color": "green", "type": "action", "count": 2 },
+            { "suit": "blue", "rank": "1", "value": 1, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "2", "value": 2, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "3", "value": 3, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "4", "value": 4, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "5", "value": 5, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "6", "value": 6, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "7", "value": 7, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "8", "value": 8, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "9", "value": 9, "color": "blue", "type": "number", "count": 2 },
+            { "suit": "blue", "rank": "stop", "value": 25, "color": "blue", "type": "action", "count": 2 },
+            { "suit": "blue", "rank": "plus", "value": 10, "color": "blue", "type": "action", "count": 2 },
+            { "suit": "blue", "rank": "change_direction", "value": 25, "color": "blue", "type": "action", "count": 2 },
+            { "suit": "blue", "rank": "taki", "value": 30, "color": "blue", "type": "action", "count": 2 },
+            { "suit": "special", "rank": "super_taki", "value": 50, "color": "black", "type": "special", "count": 1 },
+            { "suit": "special", "rank": "king", "value": 50, "color": "black", "type": "special", "count": 1 },
+            { "suit": "special", "rank": "plus_three", "value": 30, "color": "black", "type": "special", "count": 1 },
+            { "suit": "special", "rank": "break_plus_three", "value": 30, "color": "black", "type": "special", "count": 1 },
+            { "suit": "wild", "rank": "change_color", "value": 30, "color": "black", "type": "wild", "count": 4 }
+          ]
+        },
+        "card_play_rules": {
+          "play_rules": [
+            { "type": "match_any_properties", "properties": ["color", "rank"] },
+            { "type": "always_playable", "criteria": { "type": "wild" } },
+            { "type": "always_playable", "criteria": { "type": "special" } }
+          ],
+          "special_effects": [
+            { "criteria": { "rank": "stop" }, "type": "skip_player", "message": "Next player skipped" },
+            { "criteria": { "rank": "change_direction" }, "type": "reverse_direction", "message": "Direction reversed" },
+            { "criteria": { "rank": "plus_three" }, "type": "force_draw", "data": { "target": "all_other_players", "count": 3 }, "message": "All other players draw 3 cards" }
+          ]
+        },
+        "custom_actions": {
+          "taki_sequence": {
+            "description": "Play multiple cards of the same color in sequence",
+            "requirements": [
+              { "type": "has_card", "criteria": { "rank": "taki" } }
+            ],
+            "state_changes": { "open_taki": true }
+          },
+          "break_plus_three": {
+            "description": "Break a +3 attack and redirect it",
+            "requirements": [
+              { "type": "has_card", "criteria": { "rank": "break_plus_three" } }
+            ]
+          }
+        },
+        "scoring": {
+          "type": "elimination",
+          "points": {}
+        }
+      }
+    }
+  } 

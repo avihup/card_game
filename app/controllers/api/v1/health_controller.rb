@@ -1,4 +1,5 @@
 class Api::V1::HealthController < Api::V1::BaseController
+  skip_before_action :authenticate_user, only: [:show]
   def show
     begin
       # Check MongoDB connection

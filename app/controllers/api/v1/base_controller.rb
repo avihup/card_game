@@ -1,5 +1,6 @@
 class Api::V1::BaseController < ApplicationController
-  before_action :authenticate_user, except: [:health, :index]
+  skip_before_action :verify_authenticity_token
+  before_action :authenticate_user, except: [:index]
   before_action :set_default_format
   
   rescue_from Mongoid::Errors::DocumentNotFound, with: :handle_not_found

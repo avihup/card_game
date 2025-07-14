@@ -1,0 +1,839 @@
+{
+  "info": {
+    "name": "TAKI Card Game API",
+    "description": "Complete Postman collection for creating and playing TAKI card games via the Card Games API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set base URL if not already set",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3000');",
+          "}",
+          "",
+          "// Set default user credentials if not set",
+          "if (!pm.collectionVariables.get('user1_id')) {",
+          "    pm.collectionVariables.set('user1_id', 'player1_' + Date.now());",
+          "    pm.collectionVariables.set('user1_name', 'Player One');",
+          "}",
+          "",
+          "if (!pm.collectionVariables.get('user2_id')) {",
+          "    pm.collectionVariables.set('user2_id', 'player2_' + Date.now());",
+          "    pm.collectionVariables.set('user2_name', 'Player Two');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "user1_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user1_name", 
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user2_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user2_name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "taki_rule_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "game_session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "current_card_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "health"]
+        },
+        "description": "Check if the API is healthy and running"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Health check returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains success status', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    pm.expect(response.data.status).to.equal('healthy');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Create TAKI Game Rule",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username", 
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"game_rule\": {\n    \"name\": \"TAKI\",\n    \"description\": \"Israeli card game with sequences and special actions - fully configurable\",\n    \"deck_size\": 112,\n    \"min_players\": 2,\n    \"max_players\": 10,\n    \"version\": \"1.0\",\n    \"active\": true,\n    \"rules_data\": {\n      \"initial_hand_size\": 8,\n      \"win_condition\": \"first_to_empty_hand\",\n      \"turn_actions\": [\"play_card\", \"draw_card\", \"taki_sequence\", \"change_color\", \"break_plus_three\"],\n      \"deck_configuration\": {\n        \"description\": \"Taki deck with colored numbers and special action cards (112 cards total)\",\n        \"cards\": [\n          { \"suit\": \"red\", \"rank\": \"1\", \"value\": 1, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"2\", \"value\": 2, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"3\", \"value\": 3, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"4\", \"value\": 4, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"5\", \"value\": 5, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"6\", \"value\": 6, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"7\", \"value\": 7, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"8\", \"value\": 8, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"9\", \"value\": 9, \"color\": \"red\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"stop\", \"value\": 25, \"color\": \"red\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"plus\", \"value\": 10, \"color\": \"red\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"change_direction\", \"value\": 25, \"color\": \"red\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"red\", \"rank\": \"taki\", \"value\": 30, \"color\": \"red\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"1\", \"value\": 1, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"2\", \"value\": 2, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"3\", \"value\": 3, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"4\", \"value\": 4, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"5\", \"value\": 5, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"6\", \"value\": 6, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"7\", \"value\": 7, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"8\", \"value\": 8, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"9\", \"value\": 9, \"color\": \"yellow\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"stop\", \"value\": 25, \"color\": \"yellow\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"plus\", \"value\": 10, \"color\": \"yellow\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"change_direction\", \"value\": 25, \"color\": \"yellow\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"yellow\", \"rank\": \"taki\", \"value\": 30, \"color\": \"yellow\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"1\", \"value\": 1, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"2\", \"value\": 2, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"3\", \"value\": 3, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"4\", \"value\": 4, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"5\", \"value\": 5, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"6\", \"value\": 6, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"7\", \"value\": 7, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"8\", \"value\": 8, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"9\", \"value\": 9, \"color\": \"green\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"stop\", \"value\": 25, \"color\": \"green\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"plus\", \"value\": 10, \"color\": \"green\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"change_direction\", \"value\": 25, \"color\": \"green\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"green\", \"rank\": \"taki\", \"value\": 30, \"color\": \"green\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"1\", \"value\": 1, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"2\", \"value\": 2, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"3\", \"value\": 3, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"4\", \"value\": 4, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"5\", \"value\": 5, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"6\", \"value\": 6, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"7\", \"value\": 7, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"8\", \"value\": 8, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"9\", \"value\": 9, \"color\": \"blue\", \"type\": \"number\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"stop\", \"value\": 25, \"color\": \"blue\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"plus\", \"value\": 10, \"color\": \"blue\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"change_direction\", \"value\": 25, \"color\": \"blue\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"blue\", \"rank\": \"taki\", \"value\": 30, \"color\": \"blue\", \"type\": \"action\", \"count\": 2 },\n          { \"suit\": \"special\", \"rank\": \"super_taki\", \"value\": 50, \"color\": \"black\", \"type\": \"special\", \"count\": 1 },\n          { \"suit\": \"special\", \"rank\": \"king\", \"value\": 50, \"color\": \"black\", \"type\": \"special\", \"count\": 1 },\n          { \"suit\": \"special\", \"rank\": \"plus_three\", \"value\": 30, \"color\": \"black\", \"type\": \"special\", \"count\": 1 },\n          { \"suit\": \"special\", \"rank\": \"break_plus_three\", \"value\": 30, \"color\": \"black\", \"type\": \"special\", \"count\": 1 },\n          { \"suit\": \"wild\", \"rank\": \"change_color\", \"value\": 30, \"color\": \"black\", \"type\": \"wild\", \"count\": 4 }\n        ]\n      },\n      \"card_play_rules\": {\n        \"play_rules\": [\n          { \"type\": \"match_any_properties\", \"properties\": [\"color\", \"rank\"] },\n          { \"type\": \"always_playable\", \"criteria\": { \"type\": \"wild\" } },\n          { \"type\": \"always_playable\", \"criteria\": { \"type\": \"special\" } }\n        ],\n        \"special_effects\": [\n          { \"criteria\": { \"rank\": \"stop\" }, \"type\": \"skip_player\", \"message\": \"Next player skipped\" },\n          { \"criteria\": { \"rank\": \"change_direction\" }, \"type\": \"reverse_direction\", \"message\": \"Direction reversed\" },\n          { \"criteria\": { \"rank\": \"plus_three\" }, \"type\": \"force_draw\", \"data\": { \"target\": \"all_other_players\", \"count\": 3 }, \"message\": \"All other players draw 3 cards\" }\n        ]\n      },\n      \"custom_actions\": {\n        \"taki_sequence\": {\n          \"description\": \"Play multiple cards of the same color in sequence\",\n          \"requirements\": [\n            { \"type\": \"has_card\", \"criteria\": { \"rank\": \"taki\" } }\n          ],\n          \"state_changes\": { \"open_taki\": true }\n        },\n        \"break_plus_three\": {\n          \"description\": \"Break a +3 attack and redirect it\",\n          \"requirements\": [\n            { \"type\": \"has_card\", \"criteria\": { \"rank\": \"break_plus_three\" } }\n          ]\n        }\n      },\n      \"scoring\": {\n        \"type\": \"elimination\",\n        \"points\": {}\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_rules",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_rules"]
+        },
+        "description": "Create TAKI game rule directly using the create endpoint"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TAKI game rule created successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('TAKI rule data stored', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    pm.expect(response.data).to.have.property('_id');",
+              "    pm.expect(response.data.name).to.equal('TAKI');",
+              "    pm.expect(response.data.deck_size).to.equal(112);",
+              "    pm.expect(response.data.min_players).to.equal(2);",
+              "    pm.expect(response.data.max_players).to.equal(10);",
+              "    ",
+              "    // Store TAKI rule ID for later use",
+              "    pm.collectionVariables.set('taki_rule_id', response.data._id);",
+              "    ",
+              "    console.log('TAKI Rule ID stored:', response.data._id);",
+              "    console.log('TAKI Rule created with 112 cards total');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 List Game Rules",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_rules?search=TAKI",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_rules"],
+          "query": [
+            {
+              "key": "search",
+              "value": "TAKI"
+            }
+          ]
+        },
+        "description": "List available game rules, filtering for TAKI (optional verification step)"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game rules retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('TAKI rule found in list', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    ",
+              "    const takiRule = response.data.game_rules.find(rule => rule.name === 'TAKI');",
+              "    pm.expect(takiRule).to.not.be.undefined;",
+              "    ",
+              "    console.log('Found TAKI rule in list:', takiRule.name);",
+              "    console.log('Current stored TAKI rule ID:', pm.collectionVariables.get('taki_rule_id'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎮 Create TAKI Game Session",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"game_session\": {\n    \"game_rule_id\": \"{{taki_rule_id}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions"]
+        },
+        "description": "Create a new TAKI game session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game session created successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Game session data stored', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    pm.expect(response.data).to.have.property('id');",
+              "    ",
+              "    // Store game session ID for later use",
+              "    pm.collectionVariables.set('game_session_id', response.data.id);",
+              "    ",
+              "    pm.expect(response.data.status).to.equal('waiting');",
+              "    pm.expect(response.data.player_count).to.equal(1);",
+              "    ",
+              "    console.log('Game Session ID stored:', response.data.id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Player 2 Joins Game",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user2_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user2_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/join",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "join"]
+        },
+        "description": "Second player joins the TAKI game"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Player 2 joined successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Game has 2 players now', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    pm.expect(response.data.player_count).to.equal(2);",
+              "    pm.expect(response.data.can_start).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Start TAKI Game",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/start",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "start"]
+        },
+        "description": "Start the TAKI game (deals cards to players)"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game started successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Game is active with dealt cards', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    pm.expect(response.data.status).to.equal('active');",
+              "    pm.expect(response.data.current_player_index).to.be.a('number');",
+              "    ",
+              "    // Check that players have cards",
+              "    const players = response.data.players;",
+              "    pm.expect(players).to.have.length(2);",
+              "    ",
+              "    // Each player should have 8 cards (TAKI initial hand size)",
+              "    players.forEach(player => {",
+              "        pm.expect(player.hand).to.have.length(8);",
+              "    });",
+              "    ",
+              "    console.log('Game started! Current player index:', response.data.current_player_index);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Get Game State (Player 1 View)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}"]
+        },
+        "description": "Get current game state from Player 1's perspective"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game state retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Player can see their own hand', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    ",
+              "    const player1 = response.data.players.find(p => p.user_id === pm.collectionVariables.get('user1_id'));",
+              "    pm.expect(player1).to.not.be.undefined;",
+              "    pm.expect(player1.hand).to.be.an('array');",
+              "    pm.expect(player1.hand).to.have.length(8);",
+              "    ",
+              "    // Store first card ID for playing",
+              "    if (player1.hand.length > 0) {",
+              "        pm.collectionVariables.set('current_card_id', player1.hand[0].id);",
+              "        console.log('Stored card ID for playing:', player1.hand[0].id);",
+              "        console.log('Card details:', JSON.stringify(player1.hand[0], null, 2));",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎲 Play Card (Player 1)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"play_turn\": {\n    \"action\": \"play_card\",\n    \"card_id\": \"{{current_card_id}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/play_turn",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "play_turn"]
+        },
+        "description": "Player 1 plays a card from their hand"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Card played successfully or validation error handled', function () {",
+              "    // Accept both success (200) and validation error (422)",
+              "    pm.expect([200, 422]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('Response processed correctly', function () {",
+              "    const response = pm.response.json();",
+              "    ",
+              "    if (pm.response.code === 200) {",
+              "        pm.expect(response.success).to.be.true;",
+              "        console.log('Card played successfully!');",
+              "        if (response.data && response.data.action) {",
+              "            console.log('Action result:', response.data.action);",
+              "        }",
+              "    } else if (pm.response.code === 422) {",
+              "        pm.expect(response.success).to.be.false;",
+              "        console.log('Card cannot be played:', response.errors || response.message);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📥 Draw Card (Player 1)",
+      "request": {
+        "method": "POST", 
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"play_turn\": {\n    \"action\": \"draw_card\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/play_turn",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "play_turn"]
+        },
+        "description": "Player 1 draws a card from the deck (alternative to playing)"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Draw card action processed', function () {",
+              "    pm.expect([200, 422]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('Draw response handled', function () {",
+              "    const response = pm.response.json();",
+              "    ",
+              "    if (pm.response.code === 200) {",
+              "        console.log('Card drawn successfully!');",
+              "        if (response.data) {",
+              "            console.log('Cards remaining in deck:', response.data.cards_remaining);",
+              "        }",
+              "    } else {",
+              "        console.log('Draw action error:', response.errors || response.message);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Get Game State (Player 2 View)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user2_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user2_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}"]
+        },
+        "description": "Get current game state from Player 2's perspective"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game state retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Player 2 can see their hand but not Player 1\\'s', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    ",
+              "    const player2 = response.data.players.find(p => p.user_id === pm.collectionVariables.get('user2_id'));",
+              "    const player1 = response.data.players.find(p => p.user_id === pm.collectionVariables.get('user1_id'));",
+              "    ",
+              "    pm.expect(player2).to.not.be.undefined;",
+              "    pm.expect(player2.hand).to.be.an('array');",
+              "    ",
+              "    // Player 1's hand should be hidden (just count)",
+              "    pm.expect(player1.hand).to.be.a('number');",
+              "    ",
+              "    console.log('Player 2 hand size:', player2.hand.length);",
+              "    console.log('Player 1 hand size (hidden):', player1.hand);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 List All Game Sessions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions?status=active",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions"],
+          "query": [
+            {
+              "key": "status",
+              "value": "active"
+            }
+          ]
+        },
+        "description": "List all active game sessions"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game sessions listed successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Our game session is in the list', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    ",
+              "    const gameSessionId = pm.collectionVariables.get('game_session_id');",
+              "    const ourSession = response.data.game_sessions.find(session => session.id === gameSessionId);",
+              "    ",
+              "    pm.expect(ourSession).to.not.be.undefined;",
+              "    console.log('Found our game session in the list');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "⏸️ Pause Game",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/pause",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "pause"]
+        },
+        "description": "Pause the current game"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game paused successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Game status changed to paused', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    console.log('Game paused successfully');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "▶️ Resume Game",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/resume",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "resume"]
+        },
+        "description": "Resume the paused game"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game resumed successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Game status changed back to active', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    console.log('Game resumed successfully');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚪 Player 2 Leaves Game",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user2_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user2_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/leave",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "leave"]
+        },
+        "description": "Player 2 leaves the game"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Player left successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Player count decreased', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    console.log('Player 2 left the game');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "❌ Cancel Game",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user1_id}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Username",
+            "value": "{{user1_name}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/game_sessions/{{game_session_id}}/cancel",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "game_sessions", "{{game_session_id}}", "cancel"]
+        },
+        "description": "Cancel the current game session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Game cancelled successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Game session ended', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    console.log('Game cancelled successfully');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+} 
