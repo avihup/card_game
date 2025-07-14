@@ -173,7 +173,7 @@ class GameSessionService
     private
     
     def serialize_game_session(game_session, user_id = nil)
-      players = game_session.game_players.by_position.map do |player|
+      players = game_session.game_players.order_by(:position => :asc).map do |player|
         if user_id
           player.player_stats.merge(
             hand: player.serialize_hand_for_player(user_id)

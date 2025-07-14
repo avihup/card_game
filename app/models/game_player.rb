@@ -49,6 +49,7 @@ class GamePlayer < ApplicationRecord
   end
   
   def play_card_by_id(card_id)
+    card_id = card_id.to_i
     card_index = hand.find_index { |card| card['id'] == card_id }
     return nil unless card_index
     
@@ -58,10 +59,12 @@ class GamePlayer < ApplicationRecord
   end
   
   def find_card_by_id(card_id)
+    card_id = card_id.to_i
     hand.find { |card| card['id'] == card_id }
   end
   
   def has_card_id?(card_id)
+    card_id = card_id.to_i
     hand.any? { |card| card['id'] == card_id }
   end
   

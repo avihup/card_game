@@ -54,15 +54,13 @@ class GameSession < ApplicationRecord
   def start!
     return false unless can_start?
     
-    transaction do
-      initialize_game_state
-      update!(
-        status: "active",
-        started_at: Time.current,
-        current_player_index: 0,
-        turn_count: 1
-      )
-    end
+    initialize_game_state
+    update!(
+      status: "active",
+      started_at: Time.current,
+      current_player_index: 0,
+      turn_count: 1
+    )
     true
   end
   
