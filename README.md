@@ -153,7 +153,7 @@ Content-Type: application/json
 {
   "play_turn": {
     "action": "play_card",
-    "card_index": 0
+    "card_id": 1
   }
 }
 ```
@@ -195,44 +195,143 @@ curl -X POST "http://localhost:3000/api/v1/game_sessions/SESSION_ID/play_turn?us
   -d '{
     "play_turn": {
       "action": "play_card",
-      "card_index": 0
+      "card_id": 1
     }
   }'
 ```
 
 ## 🎲 Built-in Game Templates
 
-The system comes with several pre-configured game templates:
+The system comes with flexible, configuration-driven game templates:
 
-1. **Classic UNO** - The classic UNO card game (2-10 players)
-2. **Go Fish** - Classic Go Fish card game (2-6 players)
-3. **Crazy Eights** - Classic Crazy Eights card game (2-7 players)
-4. **Speed Cards** - Fast-paced card matching game (2-4 players)
-5. **Memory Match** - Card memory and matching game (2-6 players)
+1. **Standard Card Game** - Basic card game with traditional 52-card deck (2-6 players)
+2. **TAKI** - Fully configurable Israeli card game with custom deck and rules (2-10 players)
+3. **Simple Number Cards** - Example of a custom deck with colored number cards (2-4 players)
+
+All games are completely customizable through the configuration system - no hardcoded game logic!
 
 ## 🔧 Game Rule Structure
 
-Game rules are defined using a flexible JSON structure:
+Game rules are defined using a flexible JSON structure that allows complete customization:
 
 ```json
 {
-  "name": "Game Name",
-  "description": "Game description",
+  "name": "My Custom Card Game",
+  "description": "A fully customizable card game",
   "min_players": 2,
   "max_players": 4,
-  "deck_size": 52,
+  "deck_size": 20,
   "rules_data": {
-    "initial_hand_size": 7,
+    "initial_hand_size": 5,
     "win_condition": "first_to_empty_hand",
-    "turn_actions": ["play_card", "draw_card", "pass"],
-    "special_rules": {
-      "crazy_eights": true,
-      "match_suit_or_rank": true
+    "turn_actions": ["play_card", "draw_card", "custom_action"],
+    "deck_configuration": {
+      "description": "Custom deck description",
+      "cards": [
+        {
+          "suit": "red",
+          "rank": "1",
+          "value": 1,
+          "color": "red",
+          "type": "number",
+          "count": 2,
+          "display_name": "Red One",
+          "properties": {
+            "special": false
+          }
+        }
+      ],
+      "transformations": [
+        {
+          "type": "duplicate_subset",
+          "criteria": { "type": "action" },
+          "times": 1
+        }
+      ]
+    },
+    "card_play_rules": {
+      "play_rules": [
+        { "type": "match_any_properties", "properties": ["color", "rank"] },
+        { "type": "always_playable", "criteria": { "type": "wild" } }
+      ],
+      "special_effects": [
+        {
+          "criteria": { "rank": "skip" },
+          "type": "skip_player",
+          "message": "Next player is skipped!"
+        }
+      ]
+    },
+    "custom_actions": {
+      "power_play": {
+        "description": "Play multiple cards at once",
+        "requirements": [
+          { "type": "hand_size", "minimum": 3 }
+        ],
+        "state_changes": { "power_mode": true }
+      }
     },
     "scoring": {
-      "type": "elimination",
-      "points": {}
+      "type": "points",
+      "points": {
+        "1": 1,
+        "wild": 50,
+        "default": 5
+      }
     }
+  }
+}
+```
+
+### Deck Configuration
+
+The `deck_configuration` section allows you to define exactly what cards are in your deck:
+
+#### Card Definition
+- `suit`: The suit/category of the card
+- `rank`: The rank/name of the card
+- `value`: Numerical value for scoring
+- `color`: Visual color of the card
+- `type`: Type category (number, action, wild, special, etc.)
+- `count`: How many of this card to include
+- `display_name`: How the card appears to players
+- `properties`: Custom properties for special rules
+
+#### Deck Transformations
+- `duplicate_subset`: Duplicate cards matching certain criteria
+- `add_jokers`: Add joker cards to the deck
+- `custom_mapping`: Apply custom transformations to cards
+
+### Card Play Rules
+
+The `card_play_rules` section defines how cards can be played:
+
+#### Play Rule Types
+- `match_property`: Card must match a specific property of the last played card
+- `match_any_properties`: Card must match any of the specified properties
+- `match_all_properties`: Card must match all specified properties
+- `always_playable`: Cards matching criteria can always be played
+- `conditional`: Complex conditional rules based on game state
+
+#### Special Effects
+Define what happens when certain cards are played:
+- `skip_player`: Skip the next player's turn
+- `reverse_direction`: Reverse the direction of play
+- `force_draw`: Make players draw cards
+- `custom_effect`: Apply custom game state changes
+
+### Custom Actions
+
+Define completely custom turn actions beyond the basic play/draw:
+
+```json
+"custom_actions": {
+  "trade_cards": {
+    "description": "Trade cards with another player",
+    "requirements": [
+      { "type": "has_card", "criteria": { "type": "trade" } }
+    ],
+    "state_changes": { "trading_phase": true }
   }
 }
 ```
@@ -244,146 +343,149 @@ Game rules are defined using a flexible JSON structure:
 - `last_player_standing`: Last active player wins
 
 ### Turn Actions
+You can define any custom turn actions. Common ones include:
 - `play_card`: Play a card from hand
 - `draw_card`: Draw a card from deck
 - `pass`: Pass the turn
 - `discard`: Discard a card
-- `skip_turn`: Skip the turn
+- Custom actions defined in `custom_actions`
 
-## 🛠️ Development
+### Scoring Systems
+- `elimination`: First to empty hand wins (no scoring)
+- `points`: Point-based scoring with custom point values
+- `sets`: Score based on collecting sets of cards
+- `custom`: Define your own scoring logic
 
-### Running Tests
-```bash
-# Run all tests
-bundle exec rspec
+### Card IDs and Gameplay
 
-# Run specific test file
-bundle exec rspec spec/models/game_rule_spec.rb
-```
+Each card in the deck gets a unique ID when the deck is generated. When players receive cards in their hand, they can reference specific cards by their ID rather than by position in hand. This makes gameplay more robust as hand order may change.
 
-### Generate Swagger Documentation
-```bash
-# Generate swagger specs
-bundle exec rails rswag:specs:swaggerize
-```
+#### Playing Cards by ID
+When making a `play_card` action, use the card's unique ID:
 
-### Database Operations
-```bash
-# Seed database with default games
-rails db:seed
-
-# Open MongoDB console
-mongosh card_games_development
-```
-
-## 📊 API Response Format
-
-All API responses follow a consistent format:
-
-### Success Response
 ```json
 {
-  "success": true,
-  "data": { ... },
-  "message": "Optional success message"
+  "action": "play_card",
+  "card_id": 42
 }
 ```
 
-### Error Response
+#### Card Structure
+Each card in a player's hand includes:
 ```json
 {
-  "success": false,
-  "errors": ["Error message 1", "Error message 2"],
-  "message": "Optional error message"
+  "id": 42,
+  "suit": "red",
+  "rank": "5", 
+  "value": 5,
+  "color": "red",
+  "type": "number",
+  "display_name": "5 of red",
+  "properties": {}
 }
 ```
 
-### Pagination
-```json
+## 🎯 Example: Creating a TAKI Game
+
+Here's a complete example of how to create a TAKI game using the configuration system:
+
+```bash
+POST /api/v1/game_rules?user_id=creator123
+Content-Type: application/json
+
 {
-  "success": true,
-  "data": {
-    "game_rules": [ ... ],
-    "pagination": {
-      "current_page": 1,
-      "per_page": 10,
-      "total_pages": 5,
-      "total_count": 50
+  "game_rule": {
+    "name": "My Custom TAKI",
+    "description": "Israeli card game with custom rules",
+    "deck_size": 56,
+    "min_players": 2,
+    "max_players": 8,
+    "rules_data": {
+      "initial_hand_size": 8,
+      "win_condition": "first_to_empty_hand",
+      "turn_actions": ["play_card", "draw_card", "taki_sequence", "change_color"],
+      
+      "deck_configuration": {
+        "description": "TAKI deck with colored cards and special actions",
+        "cards": [
+          { "suit": "red", "rank": "1", "value": 1, "color": "red", "type": "number", "count": 2 },
+          { "suit": "red", "rank": "2", "value": 2, "color": "red", "type": "number", "count": 2 },
+          { "suit": "red", "rank": "3", "value": 3, "color": "red", "type": "number", "count": 2 },
+          { "suit": "red", "rank": "4", "value": 4, "color": "red", "type": "number", "count": 2 },
+          { "suit": "red", "rank": "5", "value": 5, "color": "red", "type": "number", "count": 2 },
+          { "suit": "red", "rank": "stop", "value": 25, "color": "red", "type": "action", "count": 2 },
+          { "suit": "red", "rank": "plus", "value": 10, "color": "red", "type": "action", "count": 2 },
+          { "suit": "red", "rank": "taki", "value": 30, "color": "red", "type": "action", "count": 2 },
+          { "suit": "blue", "rank": "1", "value": 1, "color": "blue", "type": "number", "count": 2 },
+          { "suit": "blue", "rank": "2", "value": 2, "color": "blue", "type": "number", "count": 2 },
+          { "suit": "blue", "rank": "3", "value": 3, "color": "blue", "type": "number", "count": 2 },
+          { "suit": "blue", "rank": "4", "value": 4, "color": "blue", "type": "number", "count": 2 },
+          { "suit": "blue", "rank": "5", "value": 5, "color": "blue", "type": "number", "count": 2 },
+          { "suit": "blue", "rank": "stop", "value": 25, "color": "blue", "type": "action", "count": 2 },
+          { "suit": "blue", "rank": "plus", "value": 10, "color": "blue", "type": "action", "count": 2 },
+          { "suit": "blue", "rank": "taki", "value": 30, "color": "blue", "type": "action", "count": 2 },
+          { "suit": "special", "rank": "super_taki", "value": 50, "color": "black", "type": "wild", "count": 2 },
+          { "suit": "special", "rank": "king", "value": 50, "color": "black", "type": "wild", "count": 2 },
+          { "suit": "special", "rank": "plus_three", "value": 30, "color": "black", "type": "special", "count": 2 },
+          { "suit": "wild", "rank": "change_color", "value": 30, "color": "black", "type": "wild", "count": 4 }
+        ]
+      },
+      
+      "card_play_rules": {
+        "play_rules": [
+          { "type": "match_any_properties", "properties": ["color", "rank"] },
+          { "type": "always_playable", "criteria": { "type": "wild" } },
+          { "type": "always_playable", "criteria": { "rank": "super_taki" } },
+          { "type": "always_playable", "criteria": { "rank": "king" } }
+        ],
+        "special_effects": [
+          {
+            "criteria": { "rank": "stop" },
+            "type": "skip_player",
+            "message": "Next player is skipped!"
+          },
+          {
+            "criteria": { "rank": "plus_three" },
+            "type": "force_draw",
+            "data": { "target": "all_other_players", "count": 3 },
+            "message": "All other players draw 3 cards!"
+          },
+          {
+            "criteria": { "rank": "plus" },
+            "type": "custom_effect",
+            "data": { "state_changes": { "must_play_again": true } },
+            "message": "Player must play again!"
+          }
+        ]
+      },
+      
+      "custom_actions": {
+        "taki_sequence": {
+          "description": "Play multiple cards of the same color after playing a TAKI card",
+          "requirements": [
+            { "type": "game_state", "property": "open_taki", "value": true }
+          ],
+          "state_changes": { "taki_mode": true }
+        },
+        "change_color": {
+          "description": "Change the color after playing a wild card",
+          "requirements": [
+            { "type": "has_card", "criteria": { "type": "wild" } }
+          ]
+        }
+      },
+      
+      "scoring": {
+        "type": "elimination"
+      }
     }
   }
 }
 ```
 
-## 🔍 Health Check
-
-Check API health and database connectivity:
-```bash
-GET /api/v1/health
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "version": "1.0.0",
-    "environment": "development",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "database": {
-      "status": "connected",
-      "type": "MongoDB"
-    },
-    "services": {
-      "game_rules": 5,
-      "game_sessions": 2,
-      "waiting_games": 1
-    }
-  }
-}
-```
-
-## 🚀 Deployment
-
-### Docker
-```dockerfile
-# Build and run with Docker
-docker build -t card_games_api .
-docker run -p 3000:3000 card_games_api
-```
-
-### Environment Variables
-- `RAILS_ENV`: Set to `production` for production deployment
-- `MONGODB_URL`: MongoDB connection string
-- `SECRET_KEY_BASE`: Secret key for production
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-For support and questions:
-- Check the [Swagger documentation](http://localhost:3000/api-docs)
-- Review the API examples above
-- Create an issue in the repository
-
----
-
-## 📈 Future Enhancements
-
-- [ ] JWT authentication implementation
-- [ ] WebSocket integration for real-time updates
-- [ ] Player statistics and leaderboards
-- [ ] Tournament management
-- [ ] Advanced game rule validation
-- [ ] Game replay functionality
-- [ ] Mobile app API endpoints
+This creates a fully functional TAKI game where:
+- Players can match cards by color or rank
+- Wild cards can always be played
+- Special effects trigger automatically (skip, force draw, etc.)
+- Custom actions allow TAKI sequences and color changes
+- The deck is exactly defined with the right card counts

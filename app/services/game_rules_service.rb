@@ -78,11 +78,7 @@ class GameRulesService
           errors << "turn_actions must be an array"
         end
         
-        valid_actions = %w[play_card draw_card pass discard skip_turn]
-        invalid_actions = rules_data['turn_actions'] - valid_actions
-        if invalid_actions.any?
-          errors << "Invalid turn_actions: #{invalid_actions.join(', ')}"
-        end
+        # Turn actions are now completely configurable by the user
       end
       
       # Validate win_condition
@@ -104,20 +100,76 @@ class GameRulesService
     def create_default_game_templates
       templates = [
         {
-          name: "Classic UNO",
-          description: "The classic UNO card game",
-          deck_size: 108,
+          name: "Standard Card Game",
+          description: "Basic card game with standard 52-card deck",
+          deck_size: 52,
           min_players: 2,
-          max_players: 10,
+          max_players: 6,
           rules_data: {
             initial_hand_size: 7,
             win_condition: "first_to_empty_hand",
             turn_actions: ["play_card", "draw_card"],
-            special_rules: {
-              skip_turn: true,
-              reverse_direction: true,
-              draw_two: true,
-              wild_card: true
+            deck_configuration: {
+              description: "Standard 52-card deck with suits",
+              cards: [
+                { suit: "hearts", rank: "A", value: 1, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "2", value: 2, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "3", value: 3, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "4", value: 4, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "5", value: 5, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "6", value: 6, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "7", value: 7, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "8", value: 8, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "9", value: 9, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "10", value: 10, color: "red", type: "number", count: 1 },
+                { suit: "hearts", rank: "J", value: 10, color: "red", type: "face", count: 1 },
+                { suit: "hearts", rank: "Q", value: 10, color: "red", type: "face", count: 1 },
+                { suit: "hearts", rank: "K", value: 10, color: "red", type: "face", count: 1 },
+                { suit: "diamonds", rank: "A", value: 1, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "2", value: 2, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "3", value: 3, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "4", value: 4, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "5", value: 5, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "6", value: 6, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "7", value: 7, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "8", value: 8, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "9", value: 9, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "10", value: 10, color: "red", type: "number", count: 1 },
+                { suit: "diamonds", rank: "J", value: 10, color: "red", type: "face", count: 1 },
+                { suit: "diamonds", rank: "Q", value: 10, color: "red", type: "face", count: 1 },
+                { suit: "diamonds", rank: "K", value: 10, color: "red", type: "face", count: 1 },
+                { suit: "clubs", rank: "A", value: 1, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "2", value: 2, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "3", value: 3, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "4", value: 4, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "5", value: 5, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "6", value: 6, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "7", value: 7, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "8", value: 8, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "9", value: 9, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "10", value: 10, color: "black", type: "number", count: 1 },
+                { suit: "clubs", rank: "J", value: 10, color: "black", type: "face", count: 1 },
+                { suit: "clubs", rank: "Q", value: 10, color: "black", type: "face", count: 1 },
+                { suit: "clubs", rank: "K", value: 10, color: "black", type: "face", count: 1 },
+                { suit: "spades", rank: "A", value: 1, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "2", value: 2, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "3", value: 3, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "4", value: 4, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "5", value: 5, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "6", value: 6, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "7", value: 7, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "8", value: 8, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "9", value: 9, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "10", value: 10, color: "black", type: "number", count: 1 },
+                { suit: "spades", rank: "J", value: 10, color: "black", type: "face", count: 1 },
+                { suit: "spades", rank: "Q", value: 10, color: "black", type: "face", count: 1 },
+                { suit: "spades", rank: "K", value: 10, color: "black", type: "face", count: 1 }
+              ]
+            },
+            card_play_rules: {
+              play_rules: [
+                { type: "match_any_properties", properties: ["suit", "rank"] }
+              ]
             },
             scoring: {
               type: "elimination",
@@ -127,39 +179,81 @@ class GameRulesService
           created_by: "system"
         },
         {
-          name: "Go Fish",
-          description: "Classic Go Fish card game",
-          deck_size: 52,
+          name: "TAKI",
+          description: "Israeli card game with sequences and special actions - fully configurable",
+          deck_size: 112,
           min_players: 2,
-          max_players: 6,
+          max_players: 10,
           rules_data: {
-            initial_hand_size: 7,
-            win_condition: "most_sets",
-            turn_actions: ["ask_for_card", "go_fish"],
-            special_rules: {
-              collect_sets: true,
-              ask_specific_player: true
-            },
-            scoring: {
-              type: "sets",
-              points: { "set": 1 }
-            }
-          },
-          created_by: "system"
-        },
-        {
-          name: "Crazy Eights",
-          description: "Classic Crazy Eights card game",
-          deck_size: 52,
-          min_players: 2,
-          max_players: 7,
-          rules_data: {
-            initial_hand_size: 7,
+            initial_hand_size: 8,
             win_condition: "first_to_empty_hand",
-            turn_actions: ["play_card", "draw_card"],
-            special_rules: {
-              crazy_eights: true,
-              match_suit_or_rank: true
+            turn_actions: ["play_card", "draw_card", "taki_sequence", "change_color", "break_plus_three"],
+            deck_configuration: {
+              description: "Taki deck with colored numbers and special action cards",
+              cards: [
+                # Red cards (numbers 1-9, 2 of each)
+                { suit: "red", rank: "1", value: 1, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "2", value: 2, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "3", value: 3, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "4", value: 4, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "5", value: 5, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "6", value: 6, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "7", value: 7, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "8", value: 8, color: "red", type: "number", count: 4 },
+                { suit: "red", rank: "9", value: 9, color: "red", type: "number", count: 4 },
+                # Red action cards
+                { suit: "red", rank: "stop", value: 25, color: "red", type: "action", count: 4 },
+                { suit: "red", rank: "plus", value: 10, color: "red", type: "action", count: 4 },
+                { suit: "red", rank: "change_direction", value: 25, color: "red", type: "action", count: 4 },
+                { suit: "red", rank: "taki", value: 30, color: "red", type: "action", count: 4 },
+                # Yellow cards (same structure)
+                { suit: "yellow", rank: "1", value: 1, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "2", value: 2, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "3", value: 3, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "4", value: 4, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "5", value: 5, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "6", value: 6, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "7", value: 7, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "8", value: 8, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "9", value: 9, color: "yellow", type: "number", count: 4 },
+                { suit: "yellow", rank: "stop", value: 25, color: "yellow", type: "action", count: 4 },
+                { suit: "yellow", rank: "plus", value: 10, color: "yellow", type: "action", count: 4 },
+                { suit: "yellow", rank: "change_direction", value: 25, color: "yellow", type: "action", count: 4 },
+                { suit: "yellow", rank: "taki", value: 30, color: "yellow", type: "action", count: 4 },
+                # Special cards
+                { suit: "special", rank: "super_taki", value: 50, color: "black", type: "special", count: 4 },
+                { suit: "special", rank: "king", value: 50, color: "black", type: "special", count: 4 },
+                { suit: "special", rank: "plus_three", value: 30, color: "black", type: "special", count: 4 },
+                { suit: "special", rank: "break_plus_three", value: 30, color: "black", type: "special", count: 4 },
+                { suit: "wild", rank: "change_color", value: 30, color: "black", type: "wild", count: 8 }
+              ]
+            },
+            card_play_rules: {
+              play_rules: [
+                { type: "match_any_properties", properties: ["color", "rank"] },
+                { type: "always_playable", criteria: { type: "wild" } },
+                { type: "always_playable", criteria: { type: "special" } }
+              ],
+              special_effects: [
+                { criteria: { rank: "stop" }, type: "skip_player", message: "Next player skipped" },
+                { criteria: { rank: "change_direction" }, type: "reverse_direction", message: "Direction reversed" },
+                { criteria: { rank: "plus_three" }, type: "force_draw", data: { target: "all_other_players", count: 3 }, message: "All other players draw 3 cards" }
+              ]
+            },
+            custom_actions: {
+              "taki_sequence": {
+                description: "Play multiple cards of the same color in sequence",
+                requirements: [
+                  { type: "has_card", criteria: { rank: "taki" } }
+                ],
+                state_changes: { "open_taki": true }
+              },
+              "break_plus_three": {
+                description: "Break a +3 attack and redirect it",
+                requirements: [
+                  { type: "has_card", criteria: { rank: "break_plus_three" } }
+                ]
+              }
             },
             scoring: {
               type: "elimination",

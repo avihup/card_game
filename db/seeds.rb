@@ -23,44 +23,48 @@ puts "🎲 Creating custom game rules..."
 
 custom_rules = [
   {
-    name: "Speed Cards",
-    description: "Fast-paced card matching game",
-    deck_size: 52,
+    name: "Simple Number Cards",
+    description: "Simple card game with custom number cards",
+    deck_size: 20,
     min_players: 2,
     max_players: 4,
     rules_data: {
       initial_hand_size: 5,
       win_condition: "first_to_empty_hand",
       turn_actions: ["play_card", "draw_card"],
-      special_rules: {
-        simultaneous_play: true,
-        no_turn_order: true
+      deck_configuration: {
+        description: "Simple deck with numbered cards 1-5 in 4 colors",
+        cards: [
+          { suit: "red", rank: "1", value: 1, color: "red", type: "number", count: 1 },
+          { suit: "red", rank: "2", value: 2, color: "red", type: "number", count: 1 },
+          { suit: "red", rank: "3", value: 3, color: "red", type: "number", count: 1 },
+          { suit: "red", rank: "4", value: 4, color: "red", type: "number", count: 1 },
+          { suit: "red", rank: "5", value: 5, color: "red", type: "number", count: 1 },
+          { suit: "blue", rank: "1", value: 1, color: "blue", type: "number", count: 1 },
+          { suit: "blue", rank: "2", value: 2, color: "blue", type: "number", count: 1 },
+          { suit: "blue", rank: "3", value: 3, color: "blue", type: "number", count: 1 },
+          { suit: "blue", rank: "4", value: 4, color: "blue", type: "number", count: 1 },
+          { suit: "blue", rank: "5", value: 5, color: "blue", type: "number", count: 1 },
+          { suit: "green", rank: "1", value: 1, color: "green", type: "number", count: 1 },
+          { suit: "green", rank: "2", value: 2, color: "green", type: "number", count: 1 },
+          { suit: "green", rank: "3", value: 3, color: "green", type: "number", count: 1 },
+          { suit: "green", rank: "4", value: 4, color: "green", type: "number", count: 1 },
+          { suit: "green", rank: "5", value: 5, color: "green", type: "number", count: 1 },
+          { suit: "yellow", rank: "1", value: 1, color: "yellow", type: "number", count: 1 },
+          { suit: "yellow", rank: "2", value: 2, color: "yellow", type: "number", count: 1 },
+          { suit: "yellow", rank: "3", value: 3, color: "yellow", type: "number", count: 1 },
+          { suit: "yellow", rank: "4", value: 4, color: "yellow", type: "number", count: 1 },
+          { suit: "yellow", rank: "5", value: 5, color: "yellow", type: "number", count: 1 }
+        ]
+      },
+      card_play_rules: {
+        play_rules: [
+          { type: "match_any_properties", properties: ["color", "rank"] }
+        ]
       },
       scoring: {
         type: "elimination",
         points: {}
-      }
-    },
-    created_by: "system",
-    version: "1.0"
-  },
-  {
-    name: "Memory Match",
-    description: "Card memory and matching game",
-    deck_size: 52,
-    min_players: 2,
-    max_players: 6,
-    rules_data: {
-      initial_hand_size: 0,
-      win_condition: "most_sets",
-      turn_actions: ["flip_card", "match_cards"],
-      special_rules: {
-        memory_game: true,
-        face_down_cards: true
-      },
-      scoring: {
-        type: "sets",
-        points: { "pair": 1, "three_of_kind": 3, "four_of_kind": 5 }
       }
     },
     created_by: "system",

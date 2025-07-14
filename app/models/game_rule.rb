@@ -39,6 +39,19 @@ class GameRule < ApplicationRecord
     update!(active: false)
   end
   
+  def deck_description
+    deck_config = rules_data['deck_configuration'] || {}
+    deck_config['description'] || "Custom deck with #{deck_size} cards"
+  end
+  
+  def valid_turn_actions
+    rules_data['turn_actions'] || []
+  end
+  
+  def card_play_rules
+    rules_data['card_play_rules'] || {}
+  end
+  
   private
   
   def max_players_greater_than_min_players
@@ -50,13 +63,34 @@ class GameRule < ApplicationRecord
   def rules_data_structure
     return unless rules_data
     
-    required_keys = %w[initial_hand_size win_condition turn_actions]
+    required_keys = %w[initial_hand_size win_condition turn_actions deck_configuration]
     required_keys.each do |key|
       errors.add(:rules_data, "must include #{key}") unless rules_data.key?(key)
     end
     
     if rules_data['turn_actions'] && !rules_data['turn_actions'].is_a?(Array)
       errors.add(:rules_data, "turn_actions must be an array")
+    end
+    
+    if rules_data['deck_configuration'] && !rules_data['deck_configuration'].is_a?(Hash)
+      errors.add(:rules_data, "deck_configuration must be a hash")
+    end
+    
+    validate_deck_configuration if rules_data['deck_configuration']
+  end
+  
+  def validate_deck_configuration
+    deck_config = rules_data['deck_configuration']
+    
+    unless deck_config['cards'] && deck_config['cards'].is_a?(Array)
+      errors.add(:rules_data, "deck_configuration must include cards array")
+    end
+    
+    if deck_config['cards']
+      total_cards = deck_config['cards'].sum { |card| card['count'] || 1 }
+      if total_cards != deck_size
+        errors.add(:deck_size, "must match total cards in deck_configuration (#{total_cards})")
+      end
     end
   end
 end 

@@ -150,26 +150,7 @@ class GameSession < ApplicationRecord
   end
   
   def generate_deck
-    # Standard 52-card deck
-    suits = %w[hearts diamonds clubs spades]
-    ranks = %w[A 2 3 4 5 6 7 8 9 10 J Q K]
-    
-    deck = []
-    suits.each do |suit|
-      ranks.each do |rank|
-        deck << { suit: suit, rank: rank, value: card_value(rank) }
-      end
-    end
-    
-    deck.shuffle
-  end
-  
-  def card_value(rank)
-    case rank
-    when 'A' then 1
-    when 'J', 'Q', 'K' then 10
-    else rank.to_i
-    end
+    DeckGeneratorService.generate_deck(game_rule.rules_data)
   end
   
   def deal_initial_hands

@@ -48,6 +48,23 @@ class GamePlayer < ApplicationRecord
     card
   end
   
+  def play_card_by_id(card_id)
+    card_index = hand.find_index { |card| card['id'] == card_id }
+    return nil unless card_index
+    
+    card = hand.delete_at(card_index)
+    update!(last_action_at: Time.current)
+    card
+  end
+  
+  def find_card_by_id(card_id)
+    hand.find { |card| card['id'] == card_id }
+  end
+  
+  def has_card_id?(card_id)
+    hand.any? { |card| card['id'] == card_id }
+  end
+  
   def draw_card(card)
     hand << card
     update!(last_action_at: Time.current)
@@ -96,6 +113,14 @@ class GamePlayer < ApplicationRecord
   
   def can_play_card?(card_index, game_state = {})
     return false unless card_index >= 0 && card_index < hand.size
+    return false unless is_current_player?
+    
+    # Basic validation - can be extended based on game rules
+    true
+  end
+  
+  def can_play_card_by_id?(card_id, game_state = {})
+    return false unless has_card_id?(card_id)
     return false unless is_current_player?
     
     # Basic validation - can be extended based on game rules

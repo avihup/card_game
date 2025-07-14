@@ -6,6 +6,11 @@ class GameEngineService
       
       return ServiceResult.error(["Player not found in game session"]) unless player
       
+      # Validate action is allowed
+      unless game_session.game_rule.valid_turn_actions.include?(action)
+        return ServiceResult.error(["Action '#{action}' not allowed in this game"])
+      end
+      
       case action
       when 'play_card'
         process_play_card(game_session, player, action_params)
@@ -15,10 +20,9 @@ class GameEngineService
         process_pass(game_session, player, action_params)
       when 'discard'
         process_discard(game_session, player, action_params)
-      when 'skip_turn'
-        process_skip_turn(game_session, player, action_params)
       else
-        ServiceResult.error(["Invalid action: #{action}"])
+        # Handle custom actions defined in rules
+        process_custom_action(game_session, player, action, action_params)
       end
     end
     
@@ -27,7 +31,7 @@ class GameEngineService
       game_rule = game_session.game_rule
       
       # Check if action is allowed by game rules
-      unless game_rule.rules_data['turn_actions'].include?(action)
+      unless game_rule.valid_turn_actions.include?(action)
         return ServiceResult.error(["Action '#{action}' not allowed in this game"])
       end
       
@@ -42,7 +46,7 @@ class GameEngineService
       when 'discard'
         validate_discard(game_session, player, action_params)
       else
-        ServiceResult.success(true)
+        validate_custom_action(game_session, player, action, action_params)
       end
     end
     
@@ -60,37 +64,26 @@ class GameEngineService
       when 'elimination'
         player.hand.empty? ? 1 : 0
       else
-        0
+        calculate_custom_score(player, scoring_rules)
       end
     end
     
     def check_special_conditions(game_session, player, action_params)
       game_rule = game_session.game_rule
-      special_rules = game_rule.rules_data['special_rules'] || {}
+      card_play_rules = game_rule.card_play_rules
+      
+      return [] unless card_play_rules['special_effects']
       
       results = []
+      card = action_params[:action] == 'play_card' ? player.find_card_by_id(action_params[:card_id]) : nil
       
-      # Check for skip turn condition
-      if special_rules['skip_turn'] && action_params[:action] == 'play_card'
-        card = player.hand[action_params[:card_index]]
-        if card && card['rank'] == 'skip'
-          results << { type: 'skip_next_player', message: 'Next player skipped' }
-        end
-      end
-      
-      # Check for reverse direction
-      if special_rules['reverse_direction'] && action_params[:action] == 'play_card'
-        card = player.hand[action_params[:card_index]]
-        if card && card['rank'] == 'reverse'
-          results << { type: 'reverse_direction', message: 'Play direction reversed' }
-        end
-      end
-      
-      # Check for draw cards
-      if special_rules['draw_two'] && action_params[:action] == 'play_card'
-        card = player.hand[action_params[:card_index]]
-        if card && card['rank'] == 'draw_two'
-          results << { type: 'force_draw', count: 2, message: 'Next player draws 2 cards' }
+      card_play_rules['special_effects'].each do |effect|
+        if matches_effect_criteria?(card, effect, game_session.game_state)
+          results << {
+            type: effect['type'],
+            data: effect['data'] || {},
+            message: effect['message'] || "Special effect triggered"
+          }
         end
       end
       
@@ -104,7 +97,7 @@ class GameEngineService
       when 'card_played'
         game_state['discard_pile'] ||= []
         game_state['discard_pile'] << action_data[:card]
-        game_state['last_action'] = "#{action_data[:player]} played #{action_data[:card]['rank']} of #{action_data[:card]['suit']}"
+        game_state['last_action'] = build_action_message(action_data[:player], 'played', action_data[:card])
       when 'card_drawn'
         game_state['deck_remaining'] = game_session.deck.size
         game_state['last_action'] = "#{action_data[:player]} drew a card"
@@ -114,23 +107,26 @@ class GameEngineService
         game_state['special_conditions'] ||= {}
         game_state['special_conditions'][action_data[:type]] = action_data[:data]
         game_state['last_action'] = action_data[:message]
+      when 'custom_action'
+        game_state['last_action'] = action_data[:message] || "#{action_data[:player]} performed #{action_data[:action]}"
+        game_state.merge!(action_data[:state_changes] || {})
       end
       
       game_session.update!(game_state: game_state)
     end
-    
+
     private
     
     def process_play_card(game_session, player, action_params)
-      card_index = action_params[:card_index]
+      card_id = action_params[:card_id]
       
       # Validate the move
       validation_result = validate_play_card(game_session, player, action_params)
       return validation_result unless validation_result.success?
       
       # Play the card
-      card = player.play_card(card_index)
-      return ServiceResult.error(["Invalid card index"]) unless card
+      card = player.play_card_by_id(card_id)
+      return ServiceResult.error(["Invalid card ID or card not found"]) unless card
       
       # Update game state
       update_game_state(game_session, 'card_played', {
@@ -181,10 +177,6 @@ class GameEngineService
     end
     
     def process_pass(game_session, player, action_params)
-      # Validate the move
-      validation_result = validate_pass(game_session, player, action_params)
-      return validation_result unless validation_result.success?
-      
       # Update game state
       update_game_state(game_session, 'player_passed', {
         player: player.username
@@ -197,15 +189,15 @@ class GameEngineService
     end
     
     def process_discard(game_session, player, action_params)
-      card_index = action_params[:card_index]
+      card_id = action_params[:card_id]
       
       # Validate the move
       validation_result = validate_discard(game_session, player, action_params)
       return validation_result unless validation_result.success?
       
       # Discard the card
-      card = player.play_card(card_index)
-      return ServiceResult.error(["Invalid card index"]) unless card
+      card = player.play_card_by_id(card_id)
+      return ServiceResult.error(["Invalid card ID or card not found"]) unless card
       
       # Update game state
       update_game_state(game_session, 'card_played', {
@@ -220,29 +212,41 @@ class GameEngineService
       })
     end
     
-    def process_skip_turn(game_session, player, action_params)
-      # Update game state
-      update_game_state(game_session, 'player_passed', {
-        player: player.username
-      })
+    def process_custom_action(game_session, player, action, action_params)
+      custom_actions = game_session.game_rule.rules_data['custom_actions'] || {}
+      action_config = custom_actions[action]
       
-      ServiceResult.success({
-        action: 'turn_skipped',
+      return ServiceResult.error(["Unknown custom action: #{action}"]) unless action_config
+      
+      # Execute custom action logic
+      result_data = {
+        action: action,
         player: player.username
-      })
+      }
+      
+      # Apply custom state changes
+      if action_config['state_changes']
+        update_game_state(game_session, 'custom_action', {
+          player: player.username,
+          action: action,
+          state_changes: action_config['state_changes'],
+          message: action_config['message']
+        })
+      end
+      
+      ServiceResult.success(result_data)
     end
     
     def validate_play_card(game_session, player, action_params)
-      card_index = action_params[:card_index]
+      card_id = action_params[:card_id]
       
-      return ServiceResult.error(["Card index is required"]) unless card_index
-      return ServiceResult.error(["Invalid card index"]) unless card_index >= 0 && card_index < player.hand.size
+      return ServiceResult.error(["Card ID is required"]) unless card_id
       
-      card = player.hand[card_index]
-      game_state = game_session.game_state
+      card = player.find_card_by_id(card_id)
+      return ServiceResult.error(["Card not found in player's hand"]) unless card
       
-      # Check if card can be played (basic rule validation)
-      if can_play_card?(card, game_state, game_session.game_rule)
+      # Check if card can be played using configured rules
+      if can_play_card?(card, game_session.game_state, game_session.game_rule)
         ServiceResult.success(true)
       else
         ServiceResult.error(["Card cannot be played"])
@@ -256,66 +260,156 @@ class GameEngineService
     end
     
     def validate_pass(game_session, player, action_params)
-      # Check if pass is allowed by game rules
-      game_rule = game_session.game_rule
-      if game_rule.rules_data['turn_actions'].include?('pass')
-        ServiceResult.success(true)
-      else
-        ServiceResult.error(["Pass action not allowed in this game"])
-      end
+      ServiceResult.success(true)
     end
     
     def validate_discard(game_session, player, action_params)
-      card_index = action_params[:card_index]
+      card_id = action_params[:card_id]
       
-      return ServiceResult.error(["Card index is required"]) unless card_index
-      return ServiceResult.error(["Invalid card index"]) unless card_index >= 0 && card_index < player.hand.size
+      return ServiceResult.error(["Card ID is required"]) unless card_id
+      return ServiceResult.error(["Card not found in player's hand"]) unless player.has_card_id?(card_id)
+      
+      ServiceResult.success(true)
+    end
+    
+    def validate_custom_action(game_session, player, action, action_params)
+      custom_actions = game_session.game_rule.rules_data['custom_actions'] || {}
+      action_config = custom_actions[action]
+      
+      return ServiceResult.error(["Unknown custom action: #{action}"]) unless action_config
+      
+      # Validate custom action requirements
+      if action_config['requirements']
+        action_config['requirements'].each do |requirement|
+          unless meets_requirement?(player, game_session, requirement)
+            return ServiceResult.error(["Requirement not met: #{requirement['description']}"])
+          end
+        end
+      end
       
       ServiceResult.success(true)
     end
     
     def can_play_card?(card, game_state, game_rule)
-      # Basic card matching logic - can be extended based on specific game rules
+      card_play_rules = game_rule.card_play_rules
       discard_pile = game_state['discard_pile'] || []
       
-      # If no cards in discard pile, any card can be played
-      return true if discard_pile.empty?
+      # If no cards in discard pile, check if first card rules exist
+      if discard_pile.empty?
+        first_card_rules = card_play_rules['first_card_rules']
+        return first_card_rules ? meets_card_criteria?(card, first_card_rules) : true
+      end
       
       last_card = discard_pile.last
-      special_rules = game_rule.rules_data['special_rules'] || {}
+      play_rules = card_play_rules['play_rules'] || []
       
-      # Check for match suit or rank rule
-      if special_rules['match_suit_or_rank']
-        return card['suit'] == last_card['suit'] || card['rank'] == last_card['rank']
+      # Check each play rule to see if card can be played
+      play_rules.any? do |rule|
+        case rule['type']
+        when 'match_property'
+          card[rule['property']] == last_card[rule['property']]
+        when 'match_any_properties'
+          rule['properties'].any? { |prop| card[prop] == last_card[prop] }
+        when 'match_all_properties'
+          rule['properties'].all? { |prop| card[prop] == last_card[prop] }
+        when 'always_playable'
+          meets_card_criteria?(card, rule['criteria'] || {})
+        when 'conditional'
+          meets_condition?(rule['condition'], card, last_card, game_state)
+        else
+          false
+        end
       end
-      
-      # Check for crazy eights rule
-      if special_rules['crazy_eights']
-        return card['rank'] == '8' || card['suit'] == last_card['suit'] || card['rank'] == last_card['rank']
+    end
+    
+    def meets_card_criteria?(card, criteria)
+      criteria.all? do |property, expected_value|
+        case expected_value
+        when Array
+          expected_value.include?(card[property])
+        else
+          card[property] == expected_value
+        end
       end
+    end
+    
+    def meets_condition?(condition, card, last_card, game_state)
+      # Implement conditional logic based on game state
+      # This can be extended for complex conditional rules
+      case condition['type']
+      when 'state_property'
+        game_state[condition['property']] == condition['value']
+      when 'card_count'
+        condition['operator'] == 'less_than' ? 
+          card['count'] < condition['value'] : 
+          card['count'] == condition['value']
+      else
+        true
+      end
+    end
+    
+    def matches_effect_criteria?(card, effect, game_state)
+      return false unless card
       
-      # Default: any card can be played
-      true
+      criteria = effect['criteria'] || {}
+      criteria.all? do |property, expected_value|
+        case expected_value
+        when Array
+          expected_value.include?(card[property])
+        else
+          card[property] == expected_value
+        end
+      end
     end
     
     def apply_special_condition(game_session, condition)
       case condition[:type]
-      when 'skip_next_player'
+      when 'skip_player'
         game_session.next_player!
       when 'reverse_direction'
-        # This would need more complex logic for direction reversal
-        # For now, just log the condition
-        Rails.logger.info("Direction reversed in game #{game_session.id}")
+        game_state = game_session.game_state
+        game_state['direction'] = game_state['direction'] == 'clockwise' ? 'counterclockwise' : 'clockwise'
+        game_session.update!(game_state: game_state)
       when 'force_draw'
-        next_player = game_session.game_players.find_by(position: (game_session.current_player_index + 1) % game_session.game_players.count)
-        if next_player
-          condition[:count].times do
+        target_players = determine_target_players(game_session, condition[:data])
+        target_players.each do |target_player|
+          draw_count = condition[:data]['count'] || 1
+          draw_count.times do
             break if game_session.deck.empty?
             card = game_session.deck.pop
-            next_player.draw_card(card)
+            target_player.draw_card(card)
           end
         end
+      when 'custom_effect'
+        apply_custom_effect(game_session, condition[:data])
       end
+    end
+    
+    def determine_target_players(game_session, effect_data)
+      case effect_data['target']
+      when 'next_player'
+        [game_session.game_players.find_by(position: (game_session.current_player_index + 1) % game_session.game_players.count)]
+      when 'all_other_players'
+        game_session.game_players.where(:position.ne => game_session.current_player_index)
+      when 'all_players'
+        game_session.game_players.to_a
+      else
+        []
+      end.compact
+    end
+    
+    def apply_custom_effect(game_session, effect_data)
+      # Apply custom effects defined in the game rules
+      game_state = game_session.game_state
+      
+      if effect_data['state_changes']
+        game_state.merge!(effect_data['state_changes'])
+        game_session.update!(game_state: game_state)
+      end
+    end
+    
+    def build_action_message(player, action, card)
+      "#{player} #{action} #{card['display_name'] || "#{card['rank']} of #{card['suit']}"}"
     end
     
     def calculate_points_score(player, scoring_rules)
@@ -323,7 +417,7 @@ class GameEngineService
       total_score = 0
       
       player.hand.each do |card|
-        card_points = points[card['rank']] || points['default'] || 0
+        card_points = points[card['rank']] || points[card['type']] || points['default'] || 0
         total_score += card_points
       end
       
@@ -331,11 +425,26 @@ class GameEngineService
     end
     
     def calculate_sets_score(player, scoring_rules)
-      # Count sets of cards with same rank
-      rank_counts = player.hand.group_by { |card| card['rank'] }.transform_values(&:count)
-      sets = rank_counts.values.count { |count| count >= 2 }
-      
-      sets * (scoring_rules['points']['set'] || 1)
+      # Implementation for set-based scoring
+      0 # Placeholder
+    end
+    
+    def calculate_custom_score(player, scoring_rules)
+      # Implementation for custom scoring rules
+      scoring_rules['default_score'] || 0
+    end
+    
+    def meets_requirement?(player, game_session, requirement)
+      case requirement['type']
+      when 'has_card'
+        player.hand.any? { |card| meets_card_criteria?(card, requirement['criteria']) }
+      when 'hand_size'
+        player.hand.size >= requirement['minimum']
+      when 'game_state'
+        game_session.game_state[requirement['property']] == requirement['value']
+      else
+        true
+      end
     end
   end
 end 

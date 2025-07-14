@@ -91,6 +91,6 @@ class Api::V1::GameSessionsController < Api::V1::BaseController
   end
   
   def play_turn_params
-    params.require(:play_turn).permit(:action, :card_index, :target_player_id, :target_suit, :target_rank)
+    params.require(:play_turn).permit(:action, :card_id, :target_player_id, :target_suit, :target_rank)
   end
 end 
